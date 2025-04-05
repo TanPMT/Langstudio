@@ -1,0 +1,29 @@
+meta {
+  name: SignIn2
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:5028/api/Auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "tanpham10k@gmail.com",
+    "password": "tanpham10k@gmail.com"
+  }
+  
+}
+
+body:form-urlencoded {
+  email: tanpham10000@gmail.com
+  password: tanpham10000@gmail.com
+}
+
+body:multipart-form {
+  email: tanpham10000@gmail.com
+  password: tanpham10000@gmail.com
+}
