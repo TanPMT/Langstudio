@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "UikVtH1QmKk=",
+  "dgSpecHash": "J2qaSyoz4gw=",
   "success": true,
-  "projectFilePath": "C:\\Ghost\\Code\\Dotnet\\Đồ án\\backend\\backend\\backend.csproj",
+  "projectFilePath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\tanph\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\tanph\\.nuget\\packages\\bouncycastle.cryptography\\2.5.1\\bouncycastle.cryptography.2.5.1.nupkg.sha512",

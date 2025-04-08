@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Ghost\\Code\\Dotnet\\Đồ án\\backend\\backend\\backend.csproj": {}
+    "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj": {}
   },
   "projects": {
-    "C:\\Ghost\\Code\\Dotnet\\Đồ án\\backend\\backend\\backend.csproj": {
+    "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Ghost\\Code\\Dotnet\\Đồ án\\backend\\backend\\backend.csproj",
+        "projectUniqueName": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
         "projectName": "backend",
-        "projectPath": "C:\\Ghost\\Code\\Dotnet\\Đồ án\\backend\\backend\\backend.csproj",
+        "projectPath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
         "packagesPath": "C:\\Users\\tanph\\.nuget\\packages\\",
-        "outputPath": "C:\\Ghost\\Code\\Dotnet\\Đồ án\\backend\\backend\\obj\\",
+        "outputPath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\tanph\\AppData\\Roaming\\NuGet\\NuGet.Config"
