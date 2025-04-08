@@ -1,21 +1,20 @@
 meta {
-  name: SignIn1
+  name: Verify
   type: http
-  seq: 1
+  seq: 2
 }
 
 post {
-  url: http://localhost:5028/api/Auth/login
+  url: http://localhost:5028/api/Auth/verify
   body: json
   auth: inherit
 }
 
 body:json {
   {
-    "email": "tanpham10000@gmail.com",
-    "password": "tanpham10000@gmail.com"
+    "email": "bemankda@gmail.com",
+    "code": "213842"
   }
-  
 }
 
 body:form-urlencoded {

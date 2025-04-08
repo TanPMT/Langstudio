@@ -1,19 +1,19 @@
 meta {
-  name: SignIn2
+  name: SignUp
   type: http
-  seq: 2
+  seq: 1
 }
 
 post {
-  url: http://localhost:5028/api/Auth/login
+  url: http://localhost:5028/api/Auth/register
   body: json
   auth: inherit
 }
 
 body:json {
   {
-    "email": "tanpham10k@gmail.com",
-    "password": "tanpham10k@gmail.com"
+    "email": "bemankda@gmail.com",
+    "password": "bemankda@gmail.com"
   }
   
 }
