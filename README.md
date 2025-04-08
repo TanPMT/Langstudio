@@ -10,6 +10,8 @@ dotnet ef database update
 # 3. Chạy backend
 dotnet run (don't build again)
 Lúc này backend sẽ ở port http://localhost:5028 (đừng thay đổi port backend)
+# Api frondend
+https://axios-http.com/vi/docs/intro
 # Api connect
 # 1. Download Bruno
 https://www.usebruno.com/downloads 
