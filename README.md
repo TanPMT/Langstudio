@@ -16,15 +16,15 @@ https://www.usebruno.com/downloads
 ![alt text](src/image.png)
 # 2. Add file EngStuApi
 Nhấn vô open sau đó 
-![alt text](src/image.png)
+![alt text](src/image2.png)
 
 Thêm file EngStuApi
-![alt text](src/image3.pnge.png)
+![alt text](src/image3.png)
 
 # 3. Có 2 loại api 
-Truy cập vào http://localhost:5028/Swagger/index.html để hiểu hết về các loại api nhưng sẽ dừng bruno để api testing
+- Truy cập vào http://localhost:5028/Swagger/index.html để hiểu hết về các loại api nhưng sẽ dừng bruno để api testing
 http://localhost:5028/Swagger/index.html
--![alt text](src/image4.pngmage.png)
+![alt text](src/image4.png)
 
 - Những thông tin cần thiết 
 ![alt text](src/image5.png)
