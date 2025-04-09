@@ -1,14 +1,14 @@
 # Langstudio
-# Setup backen
+# Setup backend
 # 1. Tải docker postgresdb
-docker run --name postgres-container -e POSTGRES_USER=root -e POSTGRES_PASSWORD=myPassword -e POSTGRES_DB=myDataBase -p 5432:5432 -d postgres
+- docker run --name postgres-container -e POSTGRES_USER=root -e POSTGRES_PASSWORD=myPassword -e POSTGRES_DB=myDataBase -p 5432:5432 -d postgres
 # 2. Kết nói backend với db 
-cần tải thêm dotnet "dotnet tool install --global dotnet-ef"
-dotnet ef migrations add InitialCreat
-dotnet ef database update
-// dotnet ef database drop (nếu có lỗi thì gỡ đi chạy lênh này)
+- cần tải thêm dotnet "dotnet tool install --global dotnet-ef"
+- dotnet ef migrations add InitialCreat
+- dotnet ef database update
+- // dotnet ef database drop (nếu có lỗi thì gỡ đi chạy lênh này)
 # 3. Chạy backend
-dotnet run (don't build again)
+- dotnet run (don't build again)
 Lúc này backend sẽ ở port http://localhost:5028 (đừng thay đổi port backend)
 # Api frondend
 https://axios-http.com/vi/docs/intro
