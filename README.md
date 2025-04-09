@@ -9,12 +9,12 @@
 - // dotnet ef database drop (nếu có lỗi thì gỡ đi chạy lênh này)
 # 3. Chạy backend
 - dotnet run (don't build again)
-Lúc này backend sẽ ở port http://localhost:5028 (đừng thay đổi port backend)
+- Lúc này backend sẽ ở port http://localhost:5028 (đừng thay đổi port backend)
 # Api frondend
-https://axios-http.com/vi/docs/intro
+- https://axios-http.com/vi/docs/intro
 # Api connect
 # 1. Download Bruno
-https://www.usebruno.com/downloads 
+- https://www.usebruno.com/downloads 
 ![alt text](src/image.png)
 # 2. Add file EngStuApi
 Nhấn vô open sau đó 
