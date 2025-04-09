@@ -76,6 +76,7 @@
       <div
         ref="inputDiv"
         class="textarea"
+        variant="outlined"
         contenteditable="true"
         @input="updateMessage"
         @keydown.enter.prevent="sendMessage"

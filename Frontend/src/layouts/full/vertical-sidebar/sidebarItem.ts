@@ -50,6 +50,11 @@ const sidebarItem: menu[] = [
         title: 'Register',
         icon: CircleIcon,
         to: '/register'
+      },
+      {
+        title: 'Forgot Password',
+        icon: CircleIcon,
+        to: '/forgotpass'
       }
     ]
   },
