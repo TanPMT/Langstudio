@@ -4,18 +4,140 @@ import Google from '@/assets/images/auth/social-google.svg';
 const checkbox = ref(false);
 const show1 = ref(false);
 const password = ref('');
+const code = ref('');
 const email = ref('');
 const Regform = ref();
 const firstname = ref('');
 const lastname = ref('');
+const sending = ref(false);
+const seconds = ref(0); 
+const timer = ref<number | null>(null); // ID của timer
 const passwordRules = ref([
   (v: string) => !!v || 'Password is required',
-  (v: string) => (v && v.length <= 10) || 'Password must be less than 10 characters'
+  (v: string) => (v && v.length <= 30) || 'Password must be less than 30 characters'
 ]);
 const emailRules = ref([(v: string) => !!v || 'E-mail is required', (v: string) => /.+@.+\..+/.test(v) || 'E-mail must be valid']);
 
-function validate() {
-  Regform.value.validate();
+async function validate() {
+  
+    await CreateAccount(email, code)
+  
+}
+
+function unwrapValue(value) {
+      return value && typeof value === 'object' && 'value' in value ? value.value : value;
+    }
+
+// Gửi mã xác nhận qua email
+async function sendCode() {
+  if (!email.value || !/.+@.+\..+/.test(email.value)) {
+    alert('Vui lòng nhập email hợp lệ trước khi gửi mã');
+    return;
+  }
+
+  sending.value = true;
+  
+    await GetCode(email.value, password.value )
+    // Giả lập gửi email
+    await setTimeout(() => {
+      sending.value = false;
+      startCountdown();
+    }, 1000);
+  
+  
+}
+
+// Bắt đầu đếm ngược 60 giây
+function startCountdown() {
+  seconds.value = 60;
+  if (timer.value) clearInterval(timer.value);
+  timer.value = setInterval(() => {
+    if (seconds.value > 0) {
+      seconds.value--;
+    } else {
+      clearInterval(timer.value!);
+    }
+  }, 1000);
+}
+
+async function GetCode(email, password) {
+  try {
+    // Validation cơ bản (có thể mở rộng thêm)
+    if (!email || !password) {
+      throw new Error('Email và password là bắt buộc');
+    }
+
+    const response = await fetch('http://localhost:5028/api/Auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Lỗi server không xác định');
+    }
+
+    const result = await response.json();
+    console.log('Đã gửi code thành công:', result);
+    alert(`Đã gửi mã xác nhận đến ${email}`); // Sửa email.value thành email
+    return result;
+
+  } catch (error) {
+    console.error('Lỗi gửi code:', error.message);
+    if (error.message.includes("Email already exists")) {
+      alert('Tài khoản đã tồn tại');
+    } else {
+      alert(`Lỗi gửi code: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+async function CreateAccount(email, code) {
+  try {
+    if (!email || !password || !code) {
+      throw new Error('Email , password và code là bắt buộc');
+    }
+
+    const response = await fetch('http://localhost:5028/api/Auth/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        email: unwrapValue(email), 
+        code: unwrapValue(code) 
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Lỗi server không xác định');
+    }
+
+    // Thử parse JSON, nếu không được thì xử lý như text
+    let result;
+    const contentType = response.headers.get('Content-Type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      result = await response.json();
+    } else {
+      result = await response.text(); // Xử lý như plain text nếu không phải JSON
+    }
+
+    console.log('Tạo tài khoản thành công:', result);
+    alert('Tài khoản đã được tạo thành công!');
+    window.location.href = '/login1';
+    return result;
+
+  } catch (error) {
+    console.error('Lỗi tạo tài khoản:', error.message);
+    alert(`Lỗi tạo tài khoản: ${error.message}`);
+    throw error;
+  }
 }
 </script>
 
@@ -48,7 +170,7 @@ function validate() {
     <v-text-field
       v-model="email"
       :rules="emailRules"
-      label="Email Address / Username"
+      label="Email Address"
       class="mt-4 mb-4"
       required
       density="comfortable"
@@ -71,6 +193,32 @@ function validate() {
       class="pwdInput"
     ></v-text-field>
 
+    <v-text-field 
+    v-model="code"
+    label="Code"
+    required
+    density="comfortable"
+    variant="outlined"
+    color="primary"
+    hide-details="auto"
+    class="mt-4 mb-8"
+  >
+    <template #append>
+      <v-btn
+        
+        color="primary"
+        class="mt-2"
+        size="small"
+        variant="text"
+        :disabled="seconds > 0 || sending"
+        @click="sendCode"
+      >
+        <span v-if="seconds === 0 && !sending">Send Code</span>
+        <span v-else-if="sending">Sending...</span>
+        <span v-else>{{ seconds }}s</span>
+      </v-btn>
+    </template>
+    </v-text-field>
     <div class="d-sm-inline-flex align-center mt-2 mb-7 mb-sm-0 font-weight-bold">
       <v-checkbox
         v-model="checkbox"

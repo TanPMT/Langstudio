@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Google from '@/assets/images/auth/social-google.svg';
-import { useAuthStore } from '@/stores/auth';
 import { Form } from 'vee-validate';
-
+import { useAuthStore } from '@/stores/auth-forgotpass';
 const checkbox = ref(false);
 const valid = ref(false);
 const show1 = ref(false);
 //const logform = ref();
-const username = ref('info@codedthemes.com');
+const email = ref('thai25800852@gmail.com');
 const emailRules = ref([(v: string) => !!v || 'E-mail is required', (v: string) => /.+@.+\..+/.test(v) || 'E-mail must be valid']);
-
+const authStore = useAuthStore();
 const seconds = ref(0);   // Thời gian đếm ngược
 const timer = ref<number | null>(null); // ID của timer
 const sending = ref(false); // Trạng thái gửi email
 
 // Gửi mã xác nhận qua email
 function sendCode() {
-  if (!username.value || !/.+@.+\..+/.test(username.value)) {
+  if (!email.value || !/.+@.+\..+/.test(email.value)) {
     alert('Vui lòng nhập email hợp lệ trước khi gửi mã');
     return;
   }
@@ -28,7 +26,7 @@ function sendCode() {
   setTimeout(() => {
     sending.value = false;
     startCountdown();
-    alert(`Đã gửi mã xác nhận đến ${username.value}`);
+    alert(`Đã gửi mã xác nhận đến ${email.value}`);
   }, 1000);
 }
 
@@ -46,6 +44,27 @@ function startCountdown() {
 }
 
 
+
+// Gửi mã xác nhận và bắt đầu đếm ngược
+async function sendpassacction() {
+  // if (!email.value || !/.+@.+\..+/.test(email.value)) {
+  //   alert('Vui lòng nhập email hợp lệ trước khi gửi mã');
+  //   return;
+  // }
+
+
+  try {
+    console.log('Sending Resend-Password request:', {email: email.value});
+    await authStore.sendpass(email.value);
+    alert(`Đã gửi mật khẩu đến gmail ${email.value}`);
+  } catch (error) {
+    alert('Gửi mật khẩu đến gmail thất bại!');
+  } finally {
+    sending.value = false;
+  }
+}
+
+
 </script>
 
 
@@ -53,9 +72,9 @@ function startCountdown() {
 <template>
   
   <h5 class="text-h5 text-center my-4 mb-8">Forgot Password</h5>
-  <Form @submit="" class="mt-7 loginForm" v-slot="{ errors, isSubmitting }">
+  <Form @submit="sendpassacction" class="mt-7 loginForm" v-slot="{ errors, isSubmitting }">
     <v-text-field
-      v-model="username"
+      v-model="email"
       :rules="emailRules"
       label="Email Address"
       class="mt-4 mb-8"
@@ -72,7 +91,7 @@ function startCountdown() {
     variant="outlined"
     color="primary"
     hide-details="auto"
-    class="pwdInput"
+    class="mt-4 mb-8"
   >
     <template #append>
       <v-btn
