@@ -24,7 +24,7 @@ async function validate() {
   
 }
 
-function unwrapValue(value) {
+function unwrapValue(value: any) {
       return value && typeof value === 'object' && 'value' in value ? value.value : value;
     }
 
@@ -60,7 +60,7 @@ function startCountdown() {
   }, 1000);
 }
 
-async function GetCode(email, password) {
+async function GetCode(email: any, password: any) {
   try {
     // Validation cơ bản (có thể mở rộng thêm)
     if (!email || !password) {
@@ -85,7 +85,7 @@ async function GetCode(email, password) {
     alert(`Đã gửi mã xác nhận đến ${email}`); // Sửa email.value thành email
     return result;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Lỗi gửi code:', error.message);
     if (error.message.includes("Email already exists")) {
       alert('Tài khoản đã tồn tại');
@@ -96,7 +96,7 @@ async function GetCode(email, password) {
   }
 }
 
-async function CreateAccount(email, code) {
+async function CreateAccount(email: any, code: any) {
   try {
     if (!email || !password || !code) {
       throw new Error('Email , password và code là bắt buộc');
@@ -133,7 +133,7 @@ async function CreateAccount(email, code) {
     window.location.href = '/login1';
     return result;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Lỗi tạo tài khoản:', error.message);
     alert(`Lỗi tạo tài khoản: ${error.message}`);
     throw error;

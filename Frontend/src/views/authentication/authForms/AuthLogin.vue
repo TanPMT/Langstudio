@@ -28,7 +28,7 @@ async function validate(values: any, { setErrors }: any) {
     // Gọi login từ authStore với email thay vì email
     await authStore.login(email.value, password.value);
     
-    console.log('Login successful, user:', authStore.user);
+    // console.log('Login successful, user:', authStore.user);
     
   } catch (error: any) {
     console.error('Login error:', error);
