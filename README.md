@@ -1,4 +1,6 @@
 # 1. Setup
+- Port fe: http://localhost:5173
+- Be: http://localhost:5028
 - Download dotnet-ef: dotnet tool install --global dotnet-ef
 - Update dotnet-ef: dotnet tool update --global dotnet-ef
 # 1.1 Database and MinIO
