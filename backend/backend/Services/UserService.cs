@@ -46,4 +46,13 @@ public class UserService : IUserService
 
         return avatarUrl;
     }
+
+    public async Task<string> UpdateFullNameAsync(string userId, UpdateFullNameModel model)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) throw new Exception("User not found");
+        user.FullName = model.FullName;
+        await _userManager.UpdateAsync(user);
+        return user.FullName;   
+    }
 }

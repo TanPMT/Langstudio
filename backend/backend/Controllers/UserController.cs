@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace backend.Controllers;
 
 [Authorize]
-[Route("api/[controller]")]
+[Route("/[controller]")]
 [ApiController]
 public class UserController : ControllerBase
 {
@@ -48,5 +48,13 @@ public class UserController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var avatarUrl = await _userService.UpdateAvatarAsync(userId, model);
         return Ok(new { AvatarUrl = avatarUrl });
+    }
+
+    [HttpPost("update-fullname")]
+    public async Task<IActionResult> UpdateFullName(UpdateFullNameModel model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var fullName = await _userService.UpdateFullNameAsync(userId, model);
+        return Ok(fullName + " updated successfully");
     }
 }
