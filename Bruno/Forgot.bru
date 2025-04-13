@@ -1,0 +1,17 @@
+meta {
+  name: Forgot
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:5028/api/Auth/forgot-password
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "tanpham10k@gmail.com"
+  }
+}

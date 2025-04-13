@@ -1,67 +1,150 @@
-﻿using backend.Services;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using backend.Models;
+using backend.Services;
+using Microsoft.Extensions.Configuration;
 
-namespace backend.Controllers
+namespace backend.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
+
+    public AuthController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        IEmailService emailService,
+        IConfiguration configuration)
     {
-        private readonly IUserService _userService;
-
-        public AuthController(IUserService userService)
-        {
-            _userService = userService;
-        }
-
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-        {
-            try
-            {
-                var user = await _userService.Register(request.Email, request.Password);
-                return Ok(new { Message = "Registered. Please verify your email." });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
-        
-        
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
-            var token = await _userService.Login(request.Email, request.Password);
-            if (token == null) return Unauthorized();
-            return Ok(new { Token = token });
-        }
-
-        [HttpPost("verify")]
-        public async Task<IActionResult> VerifyCode([FromBody] VerifyRequest request)
-        {
-            var result = await _userService.VerifyCode(request.Email, request.Code);
-            return result ? Ok("Verified") : BadRequest("Invalid code");
-        }
-
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
-        {
-            await _userService.SendPasswordResetLink(request.Email);
-            return Ok("Reset link sent");
-        }
-
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
-        {
-            var result = await _userService.ResetPassword(request.Email, request.Token, request.NewPassword);
-            return result ? Ok("Password reset") : BadRequest("Invalid token or expired");
-        }
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _emailService = emailService;
+        _configuration = configuration;
     }
 
-    public class RegisterRequest { public string Email { get; set; } public string Password { get; set; } }
-    public class LoginRequest { public string Email { get; set; } public string Password { get; set; } }
-    public class VerifyRequest { public string Email { get; set; } public string Code { get; set; } }
-    public class ForgotPasswordRequest { public string Email { get; set; } }
-    public class ResetPasswordRequest { public string Email { get; set; } public string Token { get; set; } public string NewPassword { get; set; } }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(RegisterModel model)
+    {
+        var existingUser = await _userManager.FindByEmailAsync(model.Email);
+        if (existingUser != null)
+        {
+            // Nếu tài khoản chưa verify, xóa để cho phép đăng ký lại
+            if (!existingUser.EmailConfirmed)
+            {
+                await _userManager.DeleteAsync(existingUser);
+            }
+            else
+            {
+                // Nếu đã verify, báo lỗi
+                return BadRequest("Email is already taken.");
+            }
+        }
+        var user = new ApplicationUser
+        {
+            UserName = model.Email, 
+            Email = model.Email,
+            FullName = model.FullName
+        };
+
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var confirmationLink = Url.Action(nameof(ConfirmEmail), "Auth", new { userId = user.Id, token }, Request.Scheme);
+
+        await _emailService.SendEmailAsync(model.Email, "Confirm your email",
+            $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
+
+        return Ok("Registration successful. Please check your email to confirm.");
+    }
+
+    [HttpGet("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail(string userId, string token)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return BadRequest("Invalid user");
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        if (!result.Succeeded)
+            return BadRequest("Email confirmation failed");
+
+        return Ok("Email confirmed successfully");
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
+            return Unauthorized("Invalid credentials");
+
+        if (!await _userManager.IsEmailConfirmedAsync(user))
+            return BadRequest("Please confirm your email first");
+
+        var token = GenerateJwtToken(user);
+        return Ok(new { Token = token });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPassWordModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.email);
+        if (user == null)
+            return BadRequest("User not found");
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var resetLink = Url.Action(nameof(ResetPassword), "Auth", new { model.email, token }, Request.Scheme);
+
+        await _emailService.SendEmailAsync(model.email, "Reset your password",
+            $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
+
+        return Ok("Password reset link sent to your email");
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+            return BadRequest("User not found");
+
+        var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        return Ok("Password reset successful");
+    }
+
+    private string GenerateJwtToken(ApplicationUser user)
+    {
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddDays(1),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
 }

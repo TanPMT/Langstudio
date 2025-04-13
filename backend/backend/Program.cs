@@ -1,53 +1,95 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using backend.Services;
-using backend.Data;
 using System.Text;
+using backend.Data;
+using backend.Models;
+using backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-//builder.Services.AddScoped<IEnglishPracticeService, EnglishPracticeService>();
-builder.Services.AddHttpClient();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.User.RequireUniqueEmail = true; // Ensure email is unique
+    options.SignIn.RequireConfirmedEmail = true; // Require email confirmation
+    //options.User.AllowedUserNameValidator = new CustomUserNameValidator(); // Allow non-unique FullName
+})
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
-// Swagger
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IMinioService, MinioService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
-app.UseStaticFiles(); // Để phục vụ file tĩnh (avatar)
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+
+var app = builder.Build();
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == 404 &&
+        !context.Response.HasStarted &&
+        context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("""
+                                          {
+                                              "status": 404,
+                                              "error": "API endpoint not found"
+                                          }
+                                          """);
+    }
+});
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); // Có thể thêm tùy chọn ở đây
+    app.UseSwaggerUI();
 }
 
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 
 app.Run();
+
+// Custom validator to bypass unique UserName requirement
+public class CustomUserNameValidator : IUserValidator<ApplicationUser>
+{
+    public Task<IdentityResult> ValidateAsync(UserManager<ApplicationUser> manager, ApplicationUser user)
+    {
+        // Allow non-unique UserName (FullName), as Email is the unique identifier
+        return Task.FromResult(IdentityResult.Success);
+    }
+}

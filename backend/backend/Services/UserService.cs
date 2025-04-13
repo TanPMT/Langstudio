@@ -1,146 +1,49 @@
-﻿using backend.Data;
+﻿using Microsoft.AspNetCore.Identity;
+using backend.Data;
 using backend.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
-namespace backend.Services
+namespace backend.Services;
+
+public class UserService : IUserService
 {
-    public class UserService : IUserService
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IMinioService _minioService;
+
+    public UserService(UserManager<ApplicationUser> userManager, IMinioService minioService)
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IEmailService _emailService;
-        private readonly IConfiguration _config;
+        _userManager = userManager;
+        _minioService = minioService;
+    }
 
-        public UserService(ApplicationDbContext context, IEmailService emailService, IConfiguration config)
-        {
-            _context = context;
-            _emailService = emailService;
-            _config = config;
-        }
-        
-        public async Task<User> Register(string email, string password)
-        {
-            // Kiểm tra email đã tồn tại
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (existingUser != null)
-            {
-                throw new Exception("Email already exists");
-            }
+    public async Task<ApplicationUser> GetCurrentUserInfoAsync(string userId)
+    {
+        return await _userManager.FindByIdAsync(userId);
+    }
 
-            var user = new User
-            {
-                Email = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-                IsVerified = false,
-                VerificationCode = GenerateCode()
-            };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            await SendVerificationCode(email);
-            return user;
-        }
-        public async Task<string> Login(string email, string password)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash) || !user.IsVerified)
-                return null;
+    public async Task<bool> ChangePasswordAsync(string userId, ChangePasswordModel model)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return false;
 
-            return GenerateJwtToken(user);
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        return result.Succeeded;
+    }
+
+    public async Task<string> UpdateAvatarAsync(string userId, UpdateAvatarModel model)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) throw new Exception("User not found");
+
+        if (!string.IsNullOrEmpty(user.AvatarUrl))
+        {
+            var oldFileName = Path.GetFileName(new Uri(user.AvatarUrl).AbsolutePath);
+            await _minioService.DeleteFileAsync(oldFileName);
         }
 
-        public async Task SendVerificationCode(string email)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user != null)
-            {
-                user.VerificationCode = GenerateCode();
-                await _context.SaveChangesAsync();
-                await _emailService.SendEmailAsync(email, "Verification Code", $"Your code is: {user.VerificationCode}");
-            }
-        }
+        var avatarUrl = await _minioService.UploadFileAsync(model.Avatar);
+        user.AvatarUrl = avatarUrl;
+        await _userManager.UpdateAsync(user);
 
-        public async Task<bool> VerifyCode(string email, string code)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user != null && user.VerificationCode == code)
-            {
-                user.IsVerified = true;
-                user.VerificationCode = null;
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            return false;
-        }
-
-        public async Task SendPasswordResetLink(string email)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user != null)
-            {
-                user.ResetToken = Guid.NewGuid().ToString();
-                user.ResetTokenExpiry = DateTime.UtcNow.AddHours(1);
-                await _context.SaveChangesAsync();
-                var resetLink = $"http://localhost:5028/reset-password?email={email}&token={user.ResetToken}";
-                await _emailService.SendEmailAsync(email, "Reset Password", $"Click here to reset: {resetLink}");
-            }
-        }
-
-        public async Task<bool> ResetPassword(string email, string token, string newPassword)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.ResetToken == token);
-            if (user != null && user.ResetTokenExpiry > DateTime.UtcNow)
-            {
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-                user.ResetToken = null;
-                user.ResetTokenExpiry = null;
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            return false;
-        }
-
-        public async Task<User> GetUserInfo(string email)
-        {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-        }
-        
-        public async Task UpdateAvatar(string email, string avatarUrl)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) throw new Exception("User not found");
-            user.AvatarUrl = avatarUrl; // Lưu URL của file đã upload
-            await _context.SaveChangesAsync();
-        }
-        public async Task UpdatePassword(string email, string newPassword)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user != null)
-            {
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        private string GenerateCode() => new Random().Next(100000, 999999).ToString();
-        private string GenerateJwtToken(User user)
-        {
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-            };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: creds);
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        return avatarUrl;
     }
 }
