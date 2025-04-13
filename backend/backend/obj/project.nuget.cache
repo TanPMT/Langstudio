@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "oLbvM3Mwo5E=",
+  "dgSpecHash": "UqdZRD8VgHc=",
   "success": true,
-  "projectFilePath": "C:\\Ghost\\Code\\Dotnet\\Langstudio2\\backend\\backend\\backend.csproj",
+  "projectFilePath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\tanph\\.nuget\\packages\\bouncycastle.cryptography\\2.5.1\\bouncycastle.cryptography.2.5.1.nupkg.sha512",
     "C:\\Users\\tanph\\.nuget\\packages\\communitytoolkit.highperformance\\8.3.0\\communitytoolkit.highperformance.8.3.0.nupkg.sha512",

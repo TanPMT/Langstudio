@@ -49,7 +49,17 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+// cros
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVueApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // đổi theo domain FE nếu cần
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // nếu dùng cookie hoặc auth header
+    });
+});
 
 
 var app = builder.Build();
@@ -70,6 +80,9 @@ app.Use(async (context, next) =>
                                           """);
     }
 });
+
+app.UseCors("AllowVueApp");
+
 
 if (app.Environment.IsDevelopment())
 {
