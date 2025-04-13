@@ -13,6 +13,7 @@
 - user:     myrootuser
 - password: myrootpassword
 - Administrator/Buckets/Create Bucket
+- Named bucket: file
 - User/Access Keys/Create Access Key 
 - "accessKey":"td45L84nRQkNhXUs9THA","secretKey":"8PUR3vqC2oXqrSu2HjHLm5h6I46oA9Bk5FAgB1Ao",
 # 1.2 Build and run
