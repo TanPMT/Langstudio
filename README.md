@@ -76,6 +76,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable server
 sudo systemctl start server
 sudo systemctl status server
+sudo systemctl restart server
 
 sudo yum install nginx -y
 
@@ -96,6 +97,11 @@ server {
         proxy_set_header   X-Forwarded-Proto $scheme;
     }
 }
+
+sudo rsync -av --delete ./publish/ /var/www/server/
+
+dotnet publish -c Release -o publish
+
 
 
 
