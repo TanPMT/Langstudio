@@ -69,7 +69,7 @@ app.Use(async (context, next) =>
 
     if (context.Response.StatusCode == 404 &&
         !context.Response.HasStarted &&
-        context.Request.Path.StartsWithSegments("/api"))
+        context.Request.Path.StartsWithSegments(""))
     {
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsync("""
