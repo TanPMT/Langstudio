@@ -44,7 +44,7 @@ jobs:
           # Cập nhật database
           dotnet ef database update || {
             echo "Database update failed, dropping and retrying..."
-            dotnet ef database drop --force
+            dotnet ef migrations add "Migration_$(date +%s)" 
             dotnet ef database update
           }
 
