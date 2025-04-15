@@ -32,11 +32,11 @@ jobs:
         PROJECT_PATH: /server/Langstudio/ # Ví dụ: /root/project
       run: |
         sshpass -p "$VPS_PASSWORD" ssh -p 26266 -o StrictHostKeyChecking=no root@42.96.13.119 << 'EOF'
-          cd backend
+          
 
           # Pull mã mới nhất
           git pull origin main
-
+          cd backend
           # Cập nhật database
           dotnet ef database update || {
             echo "Database update failed, dropping and retrying..."
