@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: alma-latest
+    runs-on: ubuntu-latest
 
     steps:
     # Checkout mã nguồn
@@ -27,11 +27,11 @@ jobs:
     # Deploy qua SSH với mật khẩu
     - name: Deploy to VPS
       env:
-        VPS_HOST: 42.96.13.119:26266
+        VPS_HOST: 42.96.13.119
         VPS_PASSWORD: 0o4bzIZR
         PROJECT_PATH: /server/Langstudio/ # Ví dụ: /root/project
       run: |
-        sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no root@$VPS_HOST << 'EOF'
+        sshpass -p "$VPS_PASSWORD" ssh -p 26266 -o StrictHostKeyChecking=no root@42.96.13.119 << 'EOF'
           cd backend
 
           # Pull mã mới nhất
