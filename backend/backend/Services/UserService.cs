@@ -55,4 +55,13 @@ public class UserService : IUserService
         await _userManager.UpdateAsync(user);
         return user.FullName;   
     }
+
+    public async Task<bool> UpdateDarkModeAsync(string userId, bool isDarkMode)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) throw new Exception("User not found");
+        user.IsDarkMode = isDarkMode;
+        await _userManager.UpdateAsync(user);
+        return user.IsDarkMode;
+    }
 }

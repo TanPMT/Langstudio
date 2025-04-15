@@ -57,4 +57,16 @@ public class UserController : ControllerBase
         var fullName = await _userService.UpdateFullNameAsync(userId, model);
         return Ok(fullName + " updated successfully");
     }
+    
+    [HttpPost("update-darkmode")]
+    public async Task<IActionResult> UpdateDarkMode([FromBody] bool isDarkMode)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var result = await _userService.UpdateDarkModeAsync(userId, isDarkMode);
+        if (result == false)
+            return Ok("Light mode updated successfully");
+        else if (result == true)
+            return Ok("Dark mode updated successfully");
+        return Ok("Mode failed to update");
+    }
 }

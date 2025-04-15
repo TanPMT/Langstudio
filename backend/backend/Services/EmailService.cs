@@ -1,46 +1,4 @@
-﻿/*using System.Net.Mail;
-using Microsoft.Extensions.Configuration;
-
-namespace backend.Services;
-
-public class EmailService : IEmailService
-{
-    private readonly IConfiguration _configuration;
-
-    public EmailService(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
-
-    public async Task SendEmailAsync(string to, string subject, string body)
-    {
-        var smtpServer = _configuration["EmailSettings:SmtpServer"];
-        var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"]);
-        var senderEmail = _configuration["EmailSettings:SenderEmail"];
-        var senderName = _configuration["EmailSettings:SenderName"];
-        var username = _configuration["EmailSettings:Username"];
-        var password = _configuration["EmailSettings:Password"];
-
-        using var client = new SmtpClient(smtpServer, smtpPort)
-        {
-            EnableSsl = true,
-            Credentials = new System.Net.NetworkCredential(username, password)
-        };
-
-        var mailMessage = new MailMessage
-        {
-            From = new MailAddress(senderEmail, senderName),
-            Subject = subject,
-            Body = body,
-            IsBodyHtml = true
-        };
-        mailMessage.To.Add(to);
-
-        await client.SendMailAsync(mailMessage);
-
-    }
-}*/
-using MailKit.Net.Smtp;
+﻿using MailKit.Net.Smtp;
 using MimeKit;
 using MailKit.Security;
 
