@@ -33,10 +33,14 @@ jobs:
       run: |
         sshpass -p "$VPS_PASSWORD" ssh -p 26266 -o StrictHostKeyChecking=no root@42.96.13.119 << 'EOF'
           
-
+          cd /server/Langstudio
           # Pull mã mới nhất
+          git reset --hard HEAD
+          git clean -fd
           git pull origin main
+
           cd backend
+
           # Cập nhật database
           dotnet ef database update || {
             echo "Database update failed, dropping and retrying..."
@@ -45,7 +49,7 @@ jobs:
           }
 
           # Publish project
-          cd $PROJECT_PATH
+    
           dotnet publish -c Release -o publish
 
           # Sync file tới thư mục production
