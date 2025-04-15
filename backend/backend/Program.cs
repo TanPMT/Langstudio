@@ -75,6 +75,7 @@ app.Use(async (context, next) =>
         await context.Response.WriteAsync("""
                                           {
                                               "status": 404,
+                                              "message": "Not Found"
                                           }
                                           """);
     }
