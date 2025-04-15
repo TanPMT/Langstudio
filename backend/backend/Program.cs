@@ -75,8 +75,6 @@ app.Use(async (context, next) =>
         await context.Response.WriteAsync("""
                                           {
                                               "status": 404,
-                                              "error": "API endpoint not found",
-                                              "message": "The requested resource was not found on this server."
                                           }
                                           """);
     }
