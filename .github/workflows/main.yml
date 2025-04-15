@@ -1,0 +1,56 @@
+name: CI/CD for ASP.NET Core
+
+on:
+  push:
+    branches:
+      - main  # Thay bằng branch bạn muốn trigger
+
+jobs:
+  deploy:
+    runs-on: alma-latest
+
+    steps:
+    # Checkout mã nguồn
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Thiết lập .NET SDK
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9'  # Thay bằng phiên bản .NET bạn dùng
+
+    # Cài đặt sshpass để sử dụng mật khẩu SSH
+    - name: Install sshpass
+      run: sudo apt-get update && sudo apt-get install -y sshpass
+
+    # Deploy qua SSH với mật khẩu
+    - name: Deploy to VPS
+      env:
+        VPS_HOST: 42.96.13.119:26266
+        VPS_PASSWORD: 0o4bzIZR
+        PROJECT_PATH: /server/Langstudio/ # Ví dụ: /root/project
+      run: |
+        sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no root@$VPS_HOST << 'EOF'
+          cd backend
+
+          # Pull mã mới nhất
+          git pull origin main
+
+          # Cập nhật database
+          dotnet ef database update || {
+            echo "Database update failed, dropping and retrying..."
+            dotnet ef database drop --force
+            dotnet ef database update
+          }
+
+          # Publish project
+          cd $PROJECT_PATH
+          dotnet publish -c Release -o publish
+
+          # Sync file tới thư mục production
+          rsync -av --delete ./publish/ /var/www/server/
+
+          # Khởi động lại service
+          systemctl restart server
+        EOF
