@@ -317,3 +317,9 @@ C:\Ghost\Code\Dotnet\Langstudio\backend\backend\obj\Debug\net9.0\refint\backend.
 C:\Ghost\Code\Dotnet\Langstudio\backend\backend\obj\Debug\net9.0\backend.pdb
 C:\Ghost\Code\Dotnet\Langstudio\backend\backend\obj\Debug\net9.0\backend.genruntimeconfig.cache
 C:\Ghost\Code\Dotnet\Langstudio\backend\backend\obj\Debug\net9.0\ref\backend.dll
+C:\Ghost\Code\Dotnet\Langstudio\backend\backend\bin\Debug\net9.0\DnsClient.dll
+C:\Ghost\Code\Dotnet\Langstudio\backend\backend\bin\Debug\net9.0\MongoDB.Bson.dll
+C:\Ghost\Code\Dotnet\Langstudio\backend\backend\bin\Debug\net9.0\MongoDB.Driver.dll
+C:\Ghost\Code\Dotnet\Langstudio\backend\backend\bin\Debug\net9.0\SharpCompress.dll
+C:\Ghost\Code\Dotnet\Langstudio\backend\backend\bin\Debug\net9.0\Snappier.dll
+C:\Ghost\Code\Dotnet\Langstudio\backend\backend\bin\Debug\net9.0\ZstdSharp.dll

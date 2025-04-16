@@ -43,9 +43,17 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddScoped<MongoDbContext>(serviceProvider =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    return new MongoDbContext(configuration);
+});
+
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IMinioService, MinioService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IWritingService, WritingService>();
+builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

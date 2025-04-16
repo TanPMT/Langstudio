@@ -1,0 +1,20 @@
+meta {
+  name: HistoryEssay
+  type: http
+  seq: 11
+}
+
+get {
+  url: http://42.96.13.119/Writing/history?page=3&pageSize=1
+  body: json
+  auth: inherit
+}
+
+params:query {
+  page: 3
+  pageSize: 1
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZTM2ZWRlYi0wNzllLTQyY2UtOWIyNy0wOTlhYjI5M2ExNGUiLCJlbWFpbCI6InRhbnBoYW0xMGtAZ21haWwuY29tIiwianRpIjoiZDI5NzIzNGQtMzZkMC00Y2ZlLThkNzYtZjc3NzM3ZTFiNGIwIiwiZXhwIjoxNzQ0ODU5NDMwLCJpc3MiOiJ5b3VyLWlzc3VlciIsImF1ZCI6InlvdXItYXVkaWVuY2UifQ.0vEuQWTcedgwVZ6uBotgzEENzuxHWJsVnpoFSBhPD9Q
+}
