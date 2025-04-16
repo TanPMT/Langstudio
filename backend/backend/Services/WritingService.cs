@@ -26,11 +26,17 @@ public class WritingService : IWritingService
     {
         try
         {
-            var prompt = $"Evaluate this IELTS writing essay and provide a band score (1.0-9.5) and brief feedback.\n\n" +
-                         $"Title: {model.Title}\n" +
-                         $"Target Band Score: {model.TargetBandScore}\n\n" +
-                         $"Essay:\n{model.Content}\n\n" +
-                         $"Response format:\n- Band Score: [score]\n- Feedback: [feedback]";
+            var prompt = $@"Evaluate this IELTS writing essay and provide a band score (from 1.0 to 9.0, in increments of 0.5) along with brief feedback. Ensure the response strictly follows the format below, with no extra text or deviations.
+
+**Response Format:**
+- **Band Score:** [score]
+- **Feedback:** [brief feedback]
+
+**Essay Details:**
+Title: {model.Title}
+Target Band Score: {model.TargetBandScore}
+Essay:
+{model.Content}";
 
             var response = await _geminiService.GenerateContentAsync(prompt);
             _logger.LogInformation("Gemini API response: {Response}", response); // Log the raw response
