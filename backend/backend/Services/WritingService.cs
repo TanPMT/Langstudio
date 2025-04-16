@@ -104,9 +104,9 @@ public class WritingService : IWritingService
     {
         try
         {
-            // Try to match the expected format: "- Band Score: [score]\n- Feedback: [feedback]"
-            var bandScoreMatch = Regex.Match(response, @"Band Score: (.*?)(?:\n|$)", RegexOptions.IgnoreCase);
-            var feedbackMatch = Regex.Match(response, @"Feedback: (.*)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            // Match format with bold markdown: "- **Band Score:** [score]\n" and "- **Feedback:** [feedback]"
+            var bandScoreMatch = Regex.Match(response, @"-\s*\*\*Band Score:\*\*\s*(.*?)(?:\n|$)", RegexOptions.IgnoreCase);
+            var feedbackMatch = Regex.Match(response, @"-\s*\*\*Feedback:\*\*\s*(.*)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
             if (bandScoreMatch.Success && feedbackMatch.Success)
             {
@@ -115,20 +115,21 @@ public class WritingService : IWritingService
                 return (bandScore1, feedback1);
             }
 
-            // Fallback: Try a more flexible parsing approach
+            // Fallback: Process line by line for more flexibility
             var lines = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             string bandScore = "Unknown";
             string feedback = response; // Default to raw response if parsing fails
 
             foreach (var line in lines)
             {
-                if (line.Trim().StartsWith("Band Score:", StringComparison.OrdinalIgnoreCase))
+                var trimmedLine = line.Trim();
+                if (trimmedLine.StartsWith("- **Band Score:**", StringComparison.OrdinalIgnoreCase))
                 {
-                    bandScore = line.Replace("Band Score:", "", StringComparison.OrdinalIgnoreCase).Trim();
+                    bandScore = trimmedLine.Replace("- **Band Score:**", "", StringComparison.OrdinalIgnoreCase).Trim();
                 }
-                else if (line.Trim().StartsWith("Feedback:", StringComparison.OrdinalIgnoreCase))
+                else if (trimmedLine.StartsWith("- **Feedback:**", StringComparison.OrdinalIgnoreCase))
                 {
-                    feedback = line.Replace("Feedback:", "", StringComparison.OrdinalIgnoreCase).Trim();
+                    feedback = trimmedLine.Replace("- **Feedback:**", "", StringComparison.OrdinalIgnoreCase).Trim();
                 }
             }
 
