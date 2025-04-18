@@ -9,4 +9,5 @@ public interface IUserService
     Task<string> UpdateAvatarAsync(string userId, UpdateAvatarModel model);
     Task<string> UpdateFullNameAsync(string userId, UpdateFullNameModel model);
     Task<bool> UpdateDarkModeAsync(string userId, bool isDarkMode);
+    
 }

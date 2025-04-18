@@ -26,7 +26,7 @@ public class WritingService : IWritingService
     {
         try
         {
-            var prompt = $@"Evaluate this IELTS writing essay and provide a band score (from 1.0 to 9.0, in increments of 0.5) along with brief feedback. Ensure the response strictly follows the format below, with no extra text or deviations.
+            var prompt = $@"Evaluate this IELTS writing essay and provide a band score (from 1.0 to 9.0 or A1 to C2, in increments of 0.5) along with brief feedback. Ensure the response strictly follows the format below, with no extra text or deviations.
 
 **Response Format:**
 - **Band Score:** [score]
