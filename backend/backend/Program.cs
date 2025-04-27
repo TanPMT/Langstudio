@@ -41,7 +41,22 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
+
+    // Thêm đoạn này để lấy token từ cookie
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Cookies["jwt"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
+
 
 builder.Services.AddScoped<MongoDbContext>(serviceProvider =>
 {
@@ -62,7 +77,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueApp", policy =>
     {
-        policy.WithOrigins("http://42.96.13.119:800") // đổi theo domain FE nếu cần
+        policy.WithOrigins("http://localhost:5173", "http://42.96.13.119:800") // đổi theo domain FE nếu cần
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials(); // nếu dùng cookie hoặc auth header

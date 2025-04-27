@@ -93,7 +93,23 @@ public class AuthController : ControllerBase
             return BadRequest("Please confirm your email first");
 
         var token = GenerateJwtToken(user);
-        return Ok(new { Token = token });
+        // Set token vào cookie
+        Response.Cookies.Append("jwt", token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddHours(1)
+        });
+
+        return Ok(new { message = "Login successful" });
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {   
+        Response.Cookies.Delete("jwt");
+        return Ok(new { message = "Logged out successfully" });
     }
 
     [HttpPost("forgot-password")]
