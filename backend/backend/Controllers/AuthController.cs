@@ -107,8 +107,15 @@ public class AuthController : ControllerBase
 
     [HttpPost("logout")]
     public IActionResult Logout()
-    {   
-        Response.Cookies.Delete("jwt");
+    {
+        Response.Cookies.Append("jwt", "", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTimeOffset.UtcNow.AddDays(-1) // hết hạn ngay lập tức
+        });
+
         return Ok(new { message = "Logged out successfully" });
     }
 
