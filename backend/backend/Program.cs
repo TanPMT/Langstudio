@@ -77,7 +77,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://tanpmt.github.io/LangStudioNext/") // đổi theo domain FE nếu cần
+        policy.WithOrigins("http://localhost:5173", "https://tanpmt.github.io/LangStudioNext") // đổi theo domain FE nếu cần
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials(); // nếu dùng cookie hoặc auth header
