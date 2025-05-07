@@ -4673,31 +4673,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\chaur\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\tanph\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\chaur\\OneDrive\\Máy tính\\api\\Langstudio\\backend\\backend\\backend.csproj",
+      "projectUniqueName": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
       "projectName": "backend",
-      "projectPath": "C:\\Users\\chaur\\OneDrive\\Máy tính\\api\\Langstudio\\backend\\backend\\backend.csproj",
-      "packagesPath": "C:\\Users\\chaur\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\chaur\\OneDrive\\Máy tính\\api\\Langstudio\\backend\\backend\\obj\\",
+      "projectPath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
+      "packagesPath": "C:\\Users\\tanph\\.nuget\\packages\\",
+      "outputPath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\chaur\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\tanph\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -4716,7 +4709,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.200"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net9.0": {
@@ -4804,7 +4797,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
