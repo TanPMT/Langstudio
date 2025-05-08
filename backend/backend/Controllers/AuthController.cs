@@ -119,7 +119,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Logged out successfully" });
     }
 
-    [HttpPost("forgot-password")]
+    /*[HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPassWordModel model)
     {
         var user = await _userManager.FindByEmailAsync(model.email);
@@ -128,6 +128,26 @@ public class AuthController : ControllerBase
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var resetLink = Url.Action(nameof(ResetPassword), "Auth", new { model.email, token }, Request.Scheme);
+
+        await _emailService.SendEmailAsync(model.email, "Reset your password",
+            $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
+
+        return Ok("Password reset link sent to your email");
+    }*/
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPassWordModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.email);
+        if (user == null)
+            return BadRequest("User not found");
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        // Get the frontend domain from configuration
+        var frontendDomain = _configuration["Frontend:BaseUrl"] ?? "https://your-frontend-domain.com";
+    
+        // Generate the reset link using the frontend domain
+        var resetLink = $"{frontendDomain}/auth/reset-password?email={model.email}&token={Uri.EscapeDataString(token)}";
 
         await _emailService.SendEmailAsync(model.email, "Reset your password",
             $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
