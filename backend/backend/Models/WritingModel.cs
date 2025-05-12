@@ -6,7 +6,7 @@ namespace backend.Models;
 public class CreateWritingModel
 {
     [Required(ErrorMessage = "Title is required")]
-    [StringLength(1000, MinimumLength = 1, ErrorMessage = "Title must be between 5 and 100 characters")]
+    [StringLength(1000, MinimumLength = 1, ErrorMessage = "Title must be between 5 and 1000 characters")]
     public string Title { get; set; }
 
     [Required(ErrorMessage = "Content is required")]
