@@ -55,7 +55,7 @@ public class MinioService : IMinioService
         var endpoint = _minioClient.Config.Endpoint.StartsWith("http://") || _minioClient.Config.Endpoint.StartsWith("https://")
             ? _minioClient.Config.Endpoint
             : $"http://42.96.13.119:9000";
-        var url = $"http://api.scanvirus.me:9000/{_bucketName}/{fileName}";
+        var url = $"https://api.scanvirus.me:9000/{_bucketName}/{fileName}";
         return url;
     }
 
