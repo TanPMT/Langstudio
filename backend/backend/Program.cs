@@ -68,6 +68,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IMinioService, MinioService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWritingService, WritingService>();
+builder.Services.AddScoped<IListeningService, ListeningService>();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 
 builder.Services.AddEndpointsApiExplorer();

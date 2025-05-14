@@ -1,0 +1,21 @@
+meta {
+  name: HisLis
+  type: http
+  seq: 16
+}
+
+get {
+  url: http://localhost:5028/Listening/topics?&topic=IELTS&page=1&pageSize=5
+  body: multipartForm
+  auth: inherit
+}
+
+params:query {
+  topic: IELTS
+  page: 1
+  pageSize: 5
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
