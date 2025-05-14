@@ -5,8 +5,9 @@ services:
     image: grafana/loki:3.4.1
     ports:
       - "3100:3100"
-    configs:
-      - source: loki_config
+    volumes:
+      - type: bind
+        source: ./loki-config.yaml
         target: /etc/loki/loki-config.yaml
     command: -config.file=/etc/loki/loki-config.yaml
     networks:
@@ -15,10 +16,10 @@ services:
   promtail:
     image: grafana/promtail:3.4.1
     volumes:
-      - /var/log:/var/log
-    configs:
-      - source: promtail_config
+      - type: bind
+        source: ./promtail-config.yaml
         target: /etc/promtail/promtail-config.yaml
+      - /var/log:/var/log
     command: -config.file=/etc/promtail/promtail-config.yaml
     networks:
       - monitoring
@@ -32,65 +33,11 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-data:/var/lib/grafana
-    configs:
-      - source: grafana_datasources
+      - type: bind
+        source: ./grafana-datasources.yaml
         target: /etc/grafana/provisioning/datasources/datasources.yaml
     networks:
       - monitoring
-
-configs:
-  loki_config:
-    content: |
-      auth_enabled: false
-      server:
-        http_listen_port: 3100
-      common:
-        path_prefix: /loki
-        storage:
-          filesystem:
-            chunks_directory: /loki/chunks
-            rules_directory: /loki/rules
-        replication_factor: 1
-        ring:
-          kvstore:
-            store: inmemory
-      schema_config:
-        configs:
-          - from: 2020-10-24
-            store: tsdb
-            object_store: filesystem
-            schema: v13
-            index:
-              prefix: index_
-              period: 24h
-
-  promtail_config:
-    content: |
-      server:
-        http_listen_port: 9080
-        grpc_listen_port: 0
-      positions:
-        filename: /tmp/positions.yaml
-      clients:
-        - url: http://loki:3100/loki/api/v1/push
-      scrape_configs:
-        - job_name: system
-          static_configs:
-            - targets:
-                - localhost
-              labels:
-                job: varlogs
-                __path__: /var/log/*.log
-
-  grafana_datasources:
-    content: |
-      apiVersion: 1
-      datasources:
-        - name: Loki
-          type: loki
-          url: http://loki:3100
-          access: proxy
-          isDefault: true
 
 volumes:
   grafana-data:
