@@ -28,7 +28,23 @@ public class ListeningService : IListeningService
         try
         {
             // Prepare prompt for Gemini API to generate content from YouTube link
-            var prompt = $@"Analyze the YouTube video at {model.LinkVideo} and provide details for an IELTS listening exercise. Ensure the response follows this format:
+            var prompt = $@"Analyze the YouTube video at {model.LinkVideo}.
+Rewrite the subtitle of a YouTube video into a coherent paragraph while maintaining the default tone. The rewritten text should be suitable for printing, ensuring clarity and readability without altering the original message. 
+
+- Focus on ensuring the paragraph flows naturally, connecting thoughts and ideas effectively.
+- Avoid any informal language or excessive punctuation that might detract from a formal written print format.
+
+# Output Format
+- The output should be a single, properly structured paragraph ready for paper printing. 
+
+# Examples
+- If the subtitle is: ""How to cook a perfect steak in 5 minutes,"" the output should be: ""This video explains how to cook a perfect steak in just five minutes, providing tips and tricks for quick preparation and cooking methods that guarantee delicious results.""
+
+- For a subtitle like: ""The top 10 places to visit in Europe,"" the output could be: ""In this video, we explore the top ten places to visit in Europe, highlighting must-see destinations that offer unique experiences and breathtaking views.""
+
+# Notes
+- Ensure to maintain the essence and primary message of the original subtitle while enhancing readability for print.
+Ensure the response follows this format:
 
 **Response Format:**
 - **Title:** [Generated title]
