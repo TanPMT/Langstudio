@@ -41,6 +41,10 @@ public class WritingController : ControllerBase
         {
             return BadRequest("Page and pageSize must be positive integers.");
         }
+        if (pageSize > 30)
+        {
+            return BadRequest("PageSize must be less than or equal to 30.");
+        }
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var essays = await _writingService.GetEssayHistoryAsync(userId, page, pageSize);

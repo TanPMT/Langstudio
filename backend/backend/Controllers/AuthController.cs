@@ -147,7 +147,7 @@ public class AuthController : ControllerBase
         var frontendDomain = _configuration["Frontend:BaseUrl"] ?? "https://your-frontend-domain.com";
     
         // Generate the reset link using the frontend domain
-        var resetLink = $"{frontendDomain}/auth/reset-password?email={model.email}&token={Uri.EscapeDataString(token)}";
+        var resetLink = $"https://tanpmt.github.io/LangStudioNext/auth/reset-password?email={model.email}&token={Uri.EscapeDataString(token)}";
 
         await _emailService.SendEmailAsync(model.email, "Reset your password",
             $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
