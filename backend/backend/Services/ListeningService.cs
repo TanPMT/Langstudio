@@ -78,6 +78,7 @@ Ensure the response follows this format:
             {
                 Id = listeningModel.Id,
                 Title = listeningModel.Title,
+                LinkVideo = model.LinkVideo,
                 Topic = listeningModel.Topic,
                 Content = listeningModel.Content,
                 BandScore = listeningModel.BandScore,
@@ -112,6 +113,7 @@ Ensure the response follows this format:
             {
                 Id = listeningModel.Id,
                 Title = listeningModel.Title,
+                LinkVideo = listeningModel.LinkVideo,
                 Topic = listeningModel.Topic,
                 Content = listeningModel.Content,
                 BandScore = listeningModel.BandScore,
@@ -141,6 +143,7 @@ Ensure the response follows this format:
             {
                 Id = l.Id,
                 Title = l.Title,
+                LinkVideo = l.LinkVideo,
                 Topic = l.Topic,
                 Content = l.Content,
                 BandScore = l.BandScore,

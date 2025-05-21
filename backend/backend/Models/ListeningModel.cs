@@ -16,6 +16,7 @@ public class CreateListeningModel
 public class ResponseListeningModel
 {
     public string Id { get; set; }
+    public string LinkVideo { get; set; }
     public string Title { get; set; }
     public string Topic { get; set; }
     public string Content { get; set; }
