@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'backend/**'  # Only trigger when changes are made to the backend directory
+      - 'Docker/**'
 
 jobs:
   deploy:
