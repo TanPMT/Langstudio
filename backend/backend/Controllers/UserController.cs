@@ -43,7 +43,7 @@ public class UserController : ControllerBase
         return Ok("Password changed successfully");
     }
 
-    [HttpPost("update-avatar")]
+    [HttpPut("update-avatar")]
     public async Task<IActionResult> UpdateAvatar([FromForm] UpdateAvatarModel model)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

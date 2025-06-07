@@ -64,13 +64,14 @@ builder.Services.AddScoped<MongoDbContext>(serviceProvider =>
     return new MongoDbContext(configuration);
 });
 
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IMinioService, MinioService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IWritingService, WritingService>();
 builder.Services.AddScoped<IListeningService, ListeningService>();
-builder.Services.AddHttpClient<IGeminiService, GeminiService>();
-
+builder.Services.AddScoped<IWritingService, WritingService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IGeminiService, GeminiService>();
+builder.Services.AddScoped<IMinioService, MinioService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
+builder.Services.AddScoped<IProService, ProService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // cros

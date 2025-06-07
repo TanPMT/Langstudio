@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj": {}
+    "C:\\Users\\tanph\\Code\\dotnet\\Langstudio\\backend\\backend\\backend.csproj": {}
   },
   "projects": {
-    "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj": {
+    "C:\\Users\\tanph\\Code\\dotnet\\Langstudio\\backend\\backend\\backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
+        "projectUniqueName": "C:\\Users\\tanph\\Code\\dotnet\\Langstudio\\backend\\backend\\backend.csproj",
         "projectName": "backend",
-        "projectPath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\backend.csproj",
+        "projectPath": "C:\\Users\\tanph\\Code\\dotnet\\Langstudio\\backend\\backend\\backend.csproj",
         "packagesPath": "C:\\Users\\tanph\\.nuget\\packages\\",
-        "outputPath": "C:\\Ghost\\Code\\Dotnet\\Langstudio\\backend\\backend\\obj\\",
+        "outputPath": "C:\\Users\\tanph\\Code\\dotnet\\Langstudio\\backend\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\tanph\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -38,7 +38,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net9.0": {
@@ -126,7 +126,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
