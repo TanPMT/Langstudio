@@ -18,9 +18,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    options.User.RequireUniqueEmail = true; // Ensure email is unique
-    options.SignIn.RequireConfirmedEmail = true; // Require email confirmation
-    //options.User.AllowedUserNameValidator = new CustomUserNameValidator(); // Allow non-unique FullName
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedEmail = true;
 })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
@@ -41,8 +40,6 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
-
-    // Thêm đoạn này để lấy token từ cookie
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -57,13 +54,20 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Add HttpClient for GeminiService
+builder.Services.AddHttpClient<IGeminiService, GeminiService>(client =>
+{
+    client.BaseAddress = new Uri("https://generativelanguage.googleapis.com");
+});
 
+// MongoDB
 builder.Services.AddScoped<MongoDbContext>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
     return new MongoDbContext(configuration);
 });
 
+// Services
 builder.Services.AddScoped<IListeningService, ListeningService>();
 builder.Services.AddScoped<IWritingService, WritingService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -72,42 +76,39 @@ builder.Services.AddScoped<IGeminiService, GeminiService>();
 builder.Services.AddScoped<IMinioService, MinioService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IProService, ProService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-// cros
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://tanpmt.github.io", "https://lang-studio-next.vercel.app") // đổi theo domain FE nếu cần
+        policy.WithOrigins("http://localhost:5173", "https://tanpmt.github.io", "https://lang-studio-next.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials(); // nếu dùng cookie hoặc auth header
+            .AllowCredentials();
     });
 });
 
-
 var app = builder.Build();
+
 app.Use(async (context, next) =>
 {
     await next();
-
-    if (context.Response.StatusCode == 404 &&
-        !context.Response.HasStarted &&
-        context.Request.Path.StartsWithSegments(""))
+    if (context.Response.StatusCode == 404 && !context.Response.HasStarted && context.Request.Path.StartsWithSegments(""))
     {
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsync("""
-                                          {
-                                              "status": 404,
-                                              "message": "Not Found"
-                                          }
-                                          """);
+            {
+                "status": 404,
+                "message": "Not Found"
+            }
+            """);
     }
 });
 
 app.UseCors("AllowVueApp");
-
 
 if (app.Environment.IsDevelopment())
 {
@@ -121,13 +122,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-// Custom validator to bypass unique UserName requirement
-public class CustomUserNameValidator : IUserValidator<ApplicationUser>
-{
-    public Task<IdentityResult> ValidateAsync(UserManager<ApplicationUser> manager, ApplicationUser user)
-    {
-        // Allow non-unique UserName (FullName), as Email is the unique identifier
-        return Task.FromResult(IdentityResult.Success);
-    }
-}

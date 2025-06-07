@@ -13,21 +13,28 @@ namespace backend.Controllers;
 public class WritingController : ControllerBase
 {
     private readonly IWritingService _writingService;
+    private readonly IProService _proService;
 
-    public WritingController(IWritingService writingService)
+    public WritingController(IWritingService writingService, IProService proService)
     {
         _writingService = writingService;
+        _proService = proService;
     }
 
     [HttpPost("submit")]
     public async Task<ActionResult<ResponseWritingModel>> SubmitEssay([FromBody] CreateWritingModel model)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!await _proService.IsProUserAsync(userId))
+        {
+            return Unauthorized("You need a Pro subscription to access this feature.");
+        }
+
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var result = await _writingService.SubmitEssayAsync(userId, model);
         return Ok(result);
     }
@@ -37,6 +44,12 @@ public class WritingController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!await _proService.IsProUserAsync(userId))
+        {
+            return Unauthorized("You need a Pro subscription to access this feature.");
+        }
+
         if (page < 1 || pageSize < 1)
         {
             return BadRequest("Page and pageSize must be positive integers.");
@@ -46,7 +59,6 @@ public class WritingController : ControllerBase
             return BadRequest("PageSize must be less than or equal to 30.");
         }
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var essays = await _writingService.GetEssayHistoryAsync(userId, page, pageSize);
 
         var response = new PagedResponseWritingModel

@@ -12,30 +12,35 @@ namespace backend.Controllers;
 public class ListeningController : ControllerBase
 {
     private readonly IListeningService _listeningService;
+    private readonly IProService _proService;
 
-    public ListeningController(IListeningService listeningService)
+    public ListeningController(IListeningService listeningService, IProService proService)
     {
         _listeningService = listeningService;
+        _proService = proService;
     }
 
     [HttpPost("submit")]
     public async Task<ActionResult<ResponseListeningModel>> SubmitOrGetDictation([FromBody] CreateListeningModel model)
     {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!await _proService.IsProUserAsync(userId))
+        {
+            return Unauthorized("You need a Pro subscription to access this feature.");
+        }
+
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        // Check if the YouTube link already exists in the database
         var existingDictation = await _listeningService.GetDictationAsync(model);
 
         if (existingDictation != null)
         {
-            // If the link exists, return the existing dictation
             return Ok(existingDictation);
         }
 
-        // If the link doesn't exist, submit a new dictation
         var result = await _listeningService.SubmitDictationAsync(model);
         return Ok(result);
     }
@@ -46,6 +51,12 @@ public class ListeningController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!await _proService.IsProUserAsync(userId))
+        {
+            return Unauthorized("You need a Pro subscription to access this feature.");
+        }
+
         if (string.IsNullOrWhiteSpace(topic))
         {
             return BadRequest("Topic is required.");
