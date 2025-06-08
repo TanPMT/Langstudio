@@ -6,6 +6,7 @@ using backend.Data;
 using backend.Models;
 using MongoDB.Driver;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace backend.Services;
 
@@ -14,12 +15,14 @@ public class VnPayService : IVnPayService
     private readonly IConfiguration _configuration;
     private readonly MongoDbContext _mongoContext;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<VnPayService> _logger;
 
-    public VnPayService(IConfiguration configuration, MongoDbContext mongoContext, UserManager<ApplicationUser> userManager)
+    public VnPayService(IConfiguration configuration, MongoDbContext mongoContext, UserManager<ApplicationUser> userManager, ILogger<VnPayService> logger)
     {
         _configuration = configuration;
         _mongoContext = mongoContext;
         _userManager = userManager;
+        _logger = logger;
     }
 
     public string CreatePaymentUrl(PaymentRequestModel model, HttpContext context)
@@ -42,10 +45,10 @@ public class VnPayService : IVnPayService
         vnpay.AddRequestData("vnp_ReturnUrl", _configuration["Vnpay:ReturnUrl"]);
         vnpay.AddRequestData("vnp_TxnRef", tick);
 
-        // Lưu giao dịch vào MongoDB trước khi chuyển hướng
+        // Lưu giao dịch vào MongoDB với trạng thái Pending
         var transaction = new PaymentTransaction
         {
-            UserId = model.OrderDescription.Split("|UserId:")[1], // Lấy userId từ OrderDescription
+            UserId = model.OrderDescription.Split("|UserId:")[1],
             TransactionId = tick,
             Amount = model.Amount,
             OrderDescription = model.OrderDescription,
@@ -53,6 +56,7 @@ public class VnPayService : IVnPayService
         };
         var collection = _mongoContext.GetCollection<PaymentTransaction>("PaymentTransactions");
         collection.InsertOneAsync(transaction).GetAwaiter().GetResult();
+        _logger.LogInformation("CreatePaymentUrl: Saved pending transaction for TxnRef: {TxnRef}, UserId: {UserId}", tick, transaction.UserId);
 
         return vnpay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
     }
@@ -71,6 +75,7 @@ public class VnPayService : IVnPayService
         var vnp_SecureHash = collections["vnp_SecureHash"];
         if (string.IsNullOrEmpty(vnp_SecureHash))
         {
+            _logger.LogError("PaymentExecuteAsync: Missing vnp_SecureHash");
             return new PaymentResponseModel
             {
                 Success = false,
@@ -87,6 +92,7 @@ public class VnPayService : IVnPayService
 
         if (!double.TryParse(vnp_Amount, out double amount))
         {
+            _logger.LogError("PaymentExecuteAsync: Invalid amount: {Amount}", vnp_Amount);
             return new PaymentResponseModel
             {
                 Success = false,
@@ -98,6 +104,7 @@ public class VnPayService : IVnPayService
 
         if (string.IsNullOrEmpty(userId))
         {
+            _logger.LogError("PaymentExecuteAsync: Invalid user ID for TxnRef: {TxnRef}", vnp_TxnRef);
             return new PaymentResponseModel
             {
                 Success = false,
@@ -111,6 +118,7 @@ public class VnPayService : IVnPayService
         bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, _configuration["Vnpay:HashSecret"]);
         if (!checkSignature)
         {
+            _logger.LogError("PaymentExecuteAsync: Invalid signature for TxnRef: {TxnRef}", vnp_TxnRef);
             return new PaymentResponseModel
             {
                 Success = false,
@@ -125,6 +133,7 @@ public class VnPayService : IVnPayService
         var transaction = await collection.Find(t => t.TransactionId == vnp_TxnRef).FirstOrDefaultAsync();
         if (transaction == null)
         {
+            _logger.LogError("PaymentExecuteAsync: Transaction not found for TxnRef: {TxnRef}", vnp_TxnRef);
             return new PaymentResponseModel
             {
                 Success = false,
@@ -135,11 +144,20 @@ public class VnPayService : IVnPayService
             };
         }
 
-        transaction.TransactionId = vnp_TransactionNo;
-        transaction.Amount = amount / 100;
-        transaction.OrderDescription = vnp_OrderInfo;
-        transaction.Status = (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00") ? "Success" : "Failed";
-        await collection.ReplaceOneAsync(t => t.Id == transaction.Id, transaction);
+        // Chỉ cập nhật nếu giao dịch chưa thành công
+        if (transaction.Status != "Success")
+        {
+            transaction.TransactionId = vnp_TransactionNo;
+            transaction.Amount = amount / 100;
+            transaction.OrderDescription = vnp_OrderInfo;
+            transaction.Status = (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00") ? "Success" : "Failed";
+            await collection.ReplaceOneAsync(t => t.Id == transaction.Id, transaction);
+            _logger.LogInformation("PaymentExecuteAsync: Transaction updated to {Status} for TxnRef: {TxnRef}", transaction.Status, vnp_TxnRef);
+        }
+        else
+        {
+            _logger.LogWarning("PaymentExecuteAsync: Transaction already processed for TxnRef: {TxnRef}", vnp_TxnRef);
+        }
 
         return new PaymentResponseModel
         {
