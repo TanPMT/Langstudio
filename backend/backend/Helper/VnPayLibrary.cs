@@ -1,22 +1,25 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 using Microsoft.AspNetCore.Http;
 
 namespace backend.Services;
 
 public class VnPayLibrary
 {
-    private SortedList<string, string> requestData = new SortedList<string, string>(new VnPayCompare());
-    private SortedList<string, string> responseData = new SortedList<string, string>(new VnPayCompare());
+    public const string VERSION = "2.1.0";
+    private readonly SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
+    private readonly SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
 
     public void AddRequestData(string key, string value)
     {
         if (!string.IsNullOrEmpty(value))
         {
-            requestData.Add(key, value);
+            _requestData.Add(key, value);
         }
     }
 
@@ -24,36 +27,103 @@ public class VnPayLibrary
     {
         if (!string.IsNullOrEmpty(value))
         {
-            responseData.Add(key, value);
+            _responseData.Add(key, value);
         }
     }
 
     public string GetResponseData(string key)
     {
-        return responseData.TryGetValue(key, out var value) ? value : string.Empty;
+        return _responseData.TryGetValue(key, out var value) ? value : string.Empty;
     }
 
     public string CreateRequestUrl(string baseUrl, string hashSecret)
     {
-        var data = string.Join("&", requestData.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
-        var checksum = HmacSHA512(hashSecret, data);
-        return $"{baseUrl}?{data}&vnp_SecureHash={checksum}";
+        StringBuilder data = new StringBuilder();
+        foreach (var kv in _requestData)
+        {
+            if (!string.IsNullOrEmpty(kv.Value))
+            {
+                data.Append(WebUtility.UrlEncode(kv.Key) + "=" + WebUtility.UrlEncode(kv.Value) + "&");
+            }
+        }
+        string queryString = data.ToString();
+        if (queryString.Length > 0)
+        {
+            queryString = queryString.Remove(queryString.Length - 1, 1); // Remove trailing '&'
+        }
+        string signData = queryString;
+        string vnp_SecureHash = Utils.HmacSHA512(hashSecret, signData);
+        return $"{baseUrl}?{queryString}&vnp_SecureHash={vnp_SecureHash}";
     }
 
     public bool ValidateSignature(string inputHash, string hashSecret)
     {
-        var data = string.Join("&", responseData
-            .Where(kvp => !kvp.Key.Equals("vnp_SecureHash", StringComparison.InvariantCultureIgnoreCase))
-            .Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
-        var checkSum = HmacSHA512(hashSecret, data);
-        return checkSum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);
+        string rspRaw = GetResponseDataString();
+        string myChecksum = Utils.HmacSHA512(hashSecret, rspRaw);
+        return myChecksum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);
     }
 
-    private string HmacSHA512(string key, string inputData)
+    private string GetResponseDataString()
     {
-        var hash = new HMACSHA512(Encoding.UTF8.GetBytes(key));
-        var hashBytes = hash.ComputeHash(Encoding.UTF8.GetBytes(inputData));
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+        StringBuilder data = new StringBuilder();
+        if (_responseData.ContainsKey("vnp_SecureHashType"))
+        {
+            _responseData.Remove("vnp_SecureHashType");
+        }
+        if (_responseData.ContainsKey("vnp_SecureHash"))
+        {
+            _responseData.Remove("vnp_SecureHash");
+        }
+        foreach (var kv in _responseData)
+        {
+            if (!string.IsNullOrEmpty(kv.Value))
+            {
+                data.Append(WebUtility.UrlEncode(kv.Key) + "=" + WebUtility.UrlEncode(kv.Value) + "&");
+            }
+        }
+        if (data.Length > 0)
+        {
+            data.Remove(data.Length - 1, 1); // Remove trailing '&'
+        }
+        return data.ToString();
+    }
+}
+
+public static class Utils
+{
+    public static string HmacSHA512(string key, string inputData)
+    {
+        var hash = new StringBuilder();
+        byte[] keyBytes = Encoding.UTF8.GetBytes(key);
+        byte[] inputBytes = Encoding.UTF8.GetBytes(inputData);
+        using (var hmac = new HMACSHA512(keyBytes))
+        {
+            byte[] hashValue = hmac.ComputeHash(inputBytes);
+            foreach (var theByte in hashValue)
+            {
+                hash.Append(theByte.ToString("x2"));
+            }
+        }
+        return hash.ToString();
+    }
+
+    public static string GetIpAddress(HttpContext context)
+    {
+        string ipAddress;
+        try
+        {
+            // Check for forwarded IP (e.g., behind a proxy or load balancer)
+            ipAddress = context.Request.Headers["X-Forwarded-For"].ToString();
+            if (string.IsNullOrEmpty(ipAddress) || ipAddress.ToLower() == "unknown" || ipAddress.Length > 45)
+            {
+                ipAddress = context.Connection.RemoteIpAddress?.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            ipAddress = "Invalid IP: " + ex.Message;
+        }
+        return ipAddress;
     }
 }
 
@@ -61,19 +131,10 @@ public class VnPayCompare : IComparer<string>
 {
     public int Compare(string x, string y)
     {
-        return string.CompareOrdinal(x, y);
-    }
-}
-
-public static class Utils
-{
-    public static string GetIpAddress(HttpContext context)
-    {
-        var ipAddress = context.Connection.RemoteIpAddress?.ToString();
-        if (string.IsNullOrEmpty(ipAddress) || ipAddress == "::1")
-        {
-            ipAddress = "127.0.0.1";
-        }
-        return ipAddress;
+        if (x == y) return 0;
+        if (x == null) return -1;
+        if (y == null) return 1;
+        var vnpCompare = CompareInfo.GetCompareInfo("en-US");
+        return vnpCompare.Compare(x, y, CompareOptions.Ordinal);
     }
 }

@@ -49,6 +49,11 @@ public class PaymentController : ControllerBase
     public async Task<IActionResult> PaymentCallback()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return BadRequest(new { Message = "User not authenticated" });
+        }
+
         var response = await _vnPayService.PaymentExecuteAsync(Request.Query, userId);
         if (response.Success)
         {
@@ -70,10 +75,21 @@ public class PaymentController : ControllerBase
         }
 
         var vnp_SecureHash = Request.Query["vnp_SecureHash"];
+        if (string.IsNullOrEmpty(vnp_SecureHash))
+        {
+            return BadRequest(new { RspCode = "97", Message = "Missing vnp_SecureHash" });
+        }
+
         var vnp_TxnRef = vnpay.GetResponseData("vnp_TxnRef");
         var vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
-        var vnp_Amount = Convert.ToDouble(vnpay.GetResponseData("vnp_Amount")) / 100;
+        var vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
+        var vnp_Amount = vnpay.GetResponseData("vnp_Amount");
         var vnp_OrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
+
+        if (!double.TryParse(vnp_Amount, out double amount))
+        {
+            return BadRequest(new { RspCode = "99", Message = "Invalid amount" });
+        }
 
         var collection = _mongoContext.GetCollection<PaymentTransaction>("PaymentTransactions");
         var transaction = await collection.Find(t => t.TransactionId == vnp_TxnRef).FirstOrDefaultAsync();
@@ -85,7 +101,7 @@ public class PaymentController : ControllerBase
 
         if (vnpay.ValidateSignature(vnp_SecureHash, _configuration["Vnpay:HashSecret"]))
         {
-            if (vnp_ResponseCode == "00")
+            if (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00")
             {
                 var user = await _userManager.FindByIdAsync(transaction.UserId);
                 if (user != null)
@@ -101,7 +117,7 @@ public class PaymentController : ControllerBase
             {
                 transaction.Status = "Failed";
                 await collection.ReplaceOneAsync(t => t.Id == transaction.Id, transaction);
-                return Ok(new { RspCode = vnp_ResponseCode, Message = "Payment Failed" });
+                return Ok(new { RspCode = vnp_ResponseCode, Message = $"Payment Failed: ResponseCode={vnp_ResponseCode}, TransactionStatus={vnp_TransactionStatus}" });
             }
         }
         return BadRequest(new { RspCode = "97", Message = "Invalid signature" });
