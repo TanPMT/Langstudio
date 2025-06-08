@@ -1,9 +1,9 @@
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using backend.Models;
 using backend.Services;
-using System.Security.Claims;
 using backend.Data;
 using MongoDB.Driver;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +13,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("/[controller]")]
-[Authorize]
+[Authorize] // Giữ Authorize cho các endpoint khác
 public class PaymentController : ControllerBase
 {
     private readonly IVnPayService _vnPayService;
@@ -41,17 +41,51 @@ public class PaymentController : ControllerBase
             return BadRequest(ModelState);
         }
 
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return BadRequest(new { Message = "User not authenticated" });
+        }
+
+        // Lưu userId vào OrderDescription để sử dụng trong callback
+        model.OrderDescription = $"Pro Subscription for LangStudio|UserId:{userId}";
+
         var paymentUrl = _vnPayService.CreatePaymentUrl(model, HttpContext);
         return Ok(new { PaymentUrl = paymentUrl });
     }
 
     [HttpGet("payment-callback")]
+    [AllowAnonymous] // Cho phép truy cập mà không cần xác thực
     public async Task<IActionResult> PaymentCallback()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var vnpay = new VnPayLibrary();
+        foreach (var (key, value) in Request.Query)
+        {
+            if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+            {
+                vnpay.AddResponseData(key, value);
+            }
+        }
+
+        var vnp_OrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
+        var vnp_TxnRef = vnpay.GetResponseData("vnp_TxnRef");
+
+        // Lấy userId từ OrderInfo hoặc database
+        string userId = null;
+        if (!string.IsNullOrEmpty(vnp_OrderInfo) && vnp_OrderInfo.Contains("|UserId:"))
+        {
+            userId = vnp_OrderInfo.Split("|UserId:")[1];
+        }
+        else
+        {
+            var collection = _mongoContext.GetCollection<PaymentTransaction>("PaymentTransactions");
+            var transaction = await collection.Find(t => t.TransactionId == vnp_TxnRef).FirstOrDefaultAsync();
+            userId = transaction?.UserId;
+        }
+
         if (string.IsNullOrEmpty(userId))
         {
-            return BadRequest(new { Message = "User not authenticated" });
+            return BadRequest(new { Message = "Cannot determine user ID" });
         }
 
         var response = await _vnPayService.PaymentExecuteAsync(Request.Query, userId);
@@ -63,6 +97,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("ipn")]
+    [AllowAnonymous] // Đảm bảo IPN không yêu cầu xác thực
     public async Task<IActionResult> PaymentIpn()
     {
         var vnpay = new VnPayLibrary();

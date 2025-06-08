@@ -42,6 +42,18 @@ public class VnPayService : IVnPayService
         vnpay.AddRequestData("vnp_ReturnUrl", _configuration["Vnpay:ReturnUrl"]);
         vnpay.AddRequestData("vnp_TxnRef", tick);
 
+        // Lưu giao dịch vào MongoDB trước khi chuyển hướng
+        var transaction = new PaymentTransaction
+        {
+            UserId = model.OrderDescription.Split("|UserId:")[1], // Lấy userId từ OrderDescription
+            TransactionId = tick,
+            Amount = model.Amount,
+            OrderDescription = model.OrderDescription,
+            Status = "Pending"
+        };
+        var collection = _mongoContext.GetCollection<PaymentTransaction>("PaymentTransactions");
+        collection.InsertOneAsync(transaction).GetAwaiter().GetResult();
+
         return vnpay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
     }
 
@@ -71,6 +83,7 @@ public class VnPayService : IVnPayService
         var vnp_TransactionNo = vnpay.GetResponseData("vnp_TransactionNo");
         var vnp_OrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
         var vnp_Amount = vnpay.GetResponseData("vnp_Amount");
+        var vnp_TxnRef = vnpay.GetResponseData("vnp_TxnRef");
 
         if (!double.TryParse(vnp_Amount, out double amount))
         {
@@ -108,27 +121,25 @@ public class VnPayService : IVnPayService
             };
         }
 
-        var transaction = new PaymentTransaction
-        {
-            UserId = userId,
-            TransactionId = vnp_TransactionNo,
-            Amount = amount / 100,
-            OrderDescription = vnp_OrderInfo,
-            Status = (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00") ? "Success" : "Failed"
-        };
-
         var collection = _mongoContext.GetCollection<PaymentTransaction>("PaymentTransactions");
-        await collection.InsertOneAsync(transaction);
-
-        if (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00")
+        var transaction = await collection.Find(t => t.TransactionId == vnp_TxnRef).FirstOrDefaultAsync();
+        if (transaction == null)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user != null)
+            return new PaymentResponseModel
             {
-                user.IsPro = true;
-                await _userManager.UpdateAsync(user);
-            }
+                Success = false,
+                Message = "Transaction not found",
+                TransactionId = vnp_TransactionNo,
+                Amount = vnp_Amount,
+                OrderDescription = vnp_OrderInfo
+            };
         }
+
+        transaction.TransactionId = vnp_TransactionNo;
+        transaction.Amount = amount / 100;
+        transaction.OrderDescription = vnp_OrderInfo;
+        transaction.Status = (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00") ? "Success" : "Failed";
+        await collection.ReplaceOneAsync(t => t.Id == transaction.Id, transaction);
 
         return new PaymentResponseModel
         {
