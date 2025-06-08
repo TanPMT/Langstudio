@@ -3,7 +3,7 @@ namespace backend.Models;
 public class PaymentRequestModel
 {
     public string OrderDescription { get; set; }
-    public double Amount { get; set; } = 50000; // Giá cố định 50,000 VND
+    public double Amount { get; set; } = 50000000; // Giá cố định 50,000 VND
     public string OrderType { get; set; } = "pro_subscription";
 }
 
