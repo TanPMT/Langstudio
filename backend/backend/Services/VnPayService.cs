@@ -9,12 +9,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace backend.Services;
 
-public interface IVnPayService
-{
-    string CreatePaymentUrl(PaymentRequestModel model, HttpContext context);
-    Task<PaymentResponseModel> PaymentExecuteAsync(IQueryCollection collections, string userId);
-}
-
 public class VnPayService : IVnPayService
 {
     private readonly IConfiguration _configuration;
