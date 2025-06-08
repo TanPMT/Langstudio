@@ -29,7 +29,8 @@ public class UserController : ControllerBase
             user.Email,
             user.FullName, 
             user.AvatarUrl,
-            user.IsDarkMode
+            user.IsDarkMode,
+            user.IsPro,
         });
     }
 
