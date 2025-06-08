@@ -3,5 +3,5 @@
 - \dt # read table
 - SELECT * FROM "AspNetUsers";
 - docker exec -it mongodb mongosh -u user -p password --authenticationDatabase admin
-- UPDATE "AspNetUsers" SET "IsPro" = false;
+
 
