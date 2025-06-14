@@ -40,6 +40,8 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           script: |
             cd /home/ec2-user/server/Langstudio
+            git reset --hard HEAD
+            git clean -fd
             git pull origin main
             cd backend
             dotnet publish -c Release -o publish
