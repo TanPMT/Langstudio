@@ -5,47 +5,43 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'  # Only trigger when changes are made to the backend directory
+      - 'backend/**'
       - 'Docker/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Thêm environment nếu bạn dùng secrets trong environment "Production"
+    # environment: Production  # Bỏ comment nếu dùng environment secrets
 
     steps:
       # Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Deploy to VPS via SSH using PEM key
+      # Debug: Kiểm tra giá trị secrets
+      - name: Debug secrets
+        run: |
+          echo "VPS_HOST is set to: [HIDDEN]"  # Không in trực tiếp để bảo mật
+          echo "VPS_USER is set to: [HIDDEN]"
+          echo "VPS_PORT is set to: [HIDDEN]"
+          if [ -z "${{ secrets.VPS_HOST }}" ]; then echo "Error: VPS_HOST is empty"; exit 1; fi
+          if [ -z "${{ secrets.VPS_USER }}" ]; then echo "Error: VPS_USER is empty"; exit 1; fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then echo "Error: SSH_PRIVATE_KEY is empty"; exit 1; fi
+          if [ -z "${{ secrets.VPS_PORT }}" ]; then echo "Error: VPS_PORT is empty"; exit 1; fi
+
+      # Deploy to VPS via SSH
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            cd ${{ secrets.PROJECT_PATH }}
-            # Pull latest code
-            git reset --hard HEAD
-            git clean -fd
+            cd /home/ec2-user/server/Langstudio
             git pull origin main
-
             cd backend
-
-            # Update database
-            dotnet ef database update || {
-              echo "Database update failed, dropping and retrying..."
-              dotnet ef migrations add "Migration_$(date +%s)"
-              dotnet ef database update
-            }
-
-            # Publish project
-            sudo dotnet publish -c Release -o publish
-
-            # Sync files to production directory
+            dotnet publish -c Release -o publish
             sudo rsync -av --delete ./publish/ /var/www/server/
-
-            # Restart service
             sudo systemctl restart server
