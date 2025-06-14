@@ -17,19 +17,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Install sshpass for SSH password authentication
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-
-      # Deploy to VPS via SSH
+      # Deploy to VPS via SSH using PEM key
       - name: Deploy to VPS
-        env:
-          VPS_HOST: 42.96.13.119
-          VPS_PASSWORD: 0o4bzIZR
-          PROJECT_PATH: /server/Langstudio/
-        run: |
-          sshpass -p "$VPS_PASSWORD" ssh -p 26266 -o StrictHostKeyChecking=no root@42.96.13.119 << 'EOF'
-            cd /server/Langstudio
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd ${{ secrets.PROJECT_PATH }}
             # Pull latest code
             git reset --hard HEAD
             git clean -fd
@@ -45,11 +42,10 @@ jobs:
             }
 
             # Publish project
-            dotnet publish -c Release -o publish
+            sudo dotnet publish -c Release -o publish
 
             # Sync files to production directory
-            rsync -av --delete ./publish/ /var/www/server/
+            sudo rsync -av --delete ./publish/ /var/www/server/
 
             # Restart service
-            systemctl restart server
-          EOF
+            sudo systemctl restart server
