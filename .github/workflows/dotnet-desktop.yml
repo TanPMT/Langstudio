@@ -1,0 +1,78 @@
+name: CI/CD for ASP.NET Core Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'  # Only trigger when changes are made to the backend directory
+      - 'Docker/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Deploy to VPS via SSH using PEM key
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 13.229.96.163
+          username: ec2-user
+          key: -----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA3C693HY/+ylueWopToL+sA25Tc/jABHZk4Qfbh2ZD+F+V3RK
+pYQtuk8ZbV1WBq1srVlydONYrS1f0xyuhWiCN2jbMXAYonx7tWjOQ0LMyfW2CPg0
+e4U10v0vT8Jmykk77K/EePWNdKwTbOxwZF9rKl/SJI+9XC1Y9YaEvKKGqO64ypZs
+stOtV6Edt9M67wRz84u/fPmFTIQH6bc3PU4W1XKWBjazDLkIU7A6MVzExWtpkrnV
+MmTKva836KNXn4EFbufC999ZUZrWNtCo8hAvTMJPO9dlL+YjDqRUEMqRTiwziNUV
+d9voHZ6TQEgDBqIjgZcqdq3PBI4CfjwLGgSo8QIDAQABAoIBAFs/o79x4iIckYQP
+0v6Omy4rAdiVhuXIf/r6jmv8KCrEsK9dqnHdzXWgwlDolXY++QL+RsjaTy212DiN
+cmYnYY/FDNH4Or1cCYis3o5RaL1p7v7YnidylVPTSYAseJzsrMDyNuJKIU1w4rwJ
+YKq4QJlXDKfKShehU3StQuVKFbR8NWfp9YGCiYn/eEZ+NhKepuipKinimut1fWCH
+wwfXtDwH+pRz/QpCBjavteXkJ55Xi/YKhyGbPnl1KHZ4Zioa7QrfTq+QPsRglUxG
+7XqfFdFbMNGXjkGQ7U2BWIyz1hCYHc8QYQv/OZ8UHxMYXc8NWfFo+73Q7YxxAlqy
+DWhoLuECgYEA+OZhhSNAisFabZiyjzO++y0i29TCHtcVrlKOts3veia1X70eYC24
+s0UYaRVjHrVjWJ1VzpXnYFoKskCIorW/6n70rR5OEAAHa2Giappu60NmZJfkp6Me
+kQ5PSTJmbZKpRJYCAgEn1RB5wuAXGo36bgRxS7plhFTesHDA53HGKSMCgYEA4nam
+L+q9Lq85xbTlb1MEYgJbI5JhIRq3CFKRDgyjfmjzI8T/ukSUpkLxlLuDSUp6bxY0
+xgaP9uZcV2YxNYfK/ca8x3B2iIo2DNUQvl2LPk02y/sc5Kyu/7r46naEYwfp86Gh
+YhHiZUJADXYQUxl21k08+IkJ0x5kmwKBeOrGKNsCgYEA3tuoxcTirVqi1S678myq
+u8uWQq8lgOekiglxr0yE+CJgk/CJmiRWFG3xhWWY8o4G/fkiM28VVLhKi4As10NV
+K2mxOrC/xKPCAOvSuRC97/jRXZCDM3ZikA73/toZzFJdLQQDmDfgqm2uGEb9aNFn
+QcrIhr3G184F9oV+s7yzaXECgYAr1wo+9nNfKT7G3kkYLvsHOiuIjFrPPMu4CbvY
++2tfGlQPVaCn34TjVsxLna1Br/BZtvPKbhTKmDfCF59pHHuYezOqbEQWFKN4Ans2
+TweYrPvxqxAh2KgcC4cKZJ0mSq7ooh6KzKmGLrgVowhv/dr6i4NFHcpQG28gbvC/
+hruLxwKBgFd5s+GzOjLWi1te3NSan4AsgiSJ5yWMH01TKiCbGOkNL7G7ZxQwc/fJ
+kMuJmsKFGbdWTZBDH6AlvTdbnZR9uKUUHAf0Ri6IMQyV7Z4ddhl/55uRVgtxiQgs
+wLrQdDqQTsaYXunIxbe9juU82Wl79vLi14Xo1eUIx2CYpOw4HqfF
+-----END RSA PRIVATE KEY-----
+
+          port: 22
+          script: |
+            cd /home/ec2-user/server/Langstudio
+            # Pull latest code
+            git reset --hard HEAD
+            git clean -fd
+            git pull origin main
+
+            cd backend
+
+            # Update database
+            dotnet ef database update || {
+              echo "Database update failed, dropping and retrying..."
+              dotnet ef migrations add "Migration_$(date +%s)"
+              dotnet ef database update
+            }
+
+            # Publish project
+            sudo dotnet publish -c Release -o publish
+
+            # Sync files to production directory
+            sudo rsync -av --delete ./publish/ /var/www/server/
+
+            # Restart service
+            sudo systemctl restart server
