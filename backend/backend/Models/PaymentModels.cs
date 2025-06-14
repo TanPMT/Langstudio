@@ -3,7 +3,8 @@ namespace backend.Models;
 public class PaymentRequestModel
 {
     public string OrderDescription { get; set; }
-    public const double Amount = 49999;
+    /*public const double Amount = 49999;*/
+    public double Amount { get; set; } = 50000000;
     public string OrderType { get; set; } = "pro_subscription";
 }
 
